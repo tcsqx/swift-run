@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>校园跑腿互助平台</title>
+<style>
+  /* ---------- 设计变量 ---------- */
+  :root {
+    --bg: #f2f5fb;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --ink: #0f172a;
+    --ink-2: #475467;
+    --ink-3: #98a2b3;
+    --line: #e7ecf3;
+    --line-strong: #d5dded;
+    --brand: #4f6ef7;
+    --brand-2: #7c5cff;
+    --brand-soft: #eef2ff;
+    --ok-soft: #e7f8f1;
+    --warn: #f59e0b;
+    --warn-soft: #fef4e3;
+    --danger: #ef4444;
+    --radius-lg: 20px;
+    --radius: 14px;
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, .05);
+    --shadow-sm: 0 4px 14px -6px rgba(15, 23, 42, .12);
+    --shadow-md: 0 14px 34px -14px rgba(15, 23, 42, .22);
+    --ring: 0 0 0 4px rgba(79, 110, 247, .14);
+  }
+
+  /* ---------- 基础重置 ---------- */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, p { margin: 0; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  b { font-weight: 600; }
+
+  /* 背景柔光，避免大面积纯色显得平 */
+  .bg-glow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(760px 340px at 12% -6%, rgba(124, 92, 255, .16), transparent 70%),
+      radial-gradient(720px 320px at 92% -12%, rgba(79, 110, 247, .16), transparent 70%);
+  }
+
+  /* ---------- 顶部导航 ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    backdrop-filter: saturate(1.6) blur(14px);
+    background: rgba(255, 255, 255, .82);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 650;
+    font-size: 16px;
+    white-space: nowrap;
+  }
+  .brand__mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    box-shadow: 0 6px 16px -6px rgba(79, 110, 247, .8);
+  }
+  .brand__mark svg { width: 19px; height: 19px; }
+  .brand__text em { font-style: normal; color: var(--ink-3); margin: 0 1px; }
+
+  .nav__links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+  }
+  .nav__link {
+    padding: 7px 13px;
+    border-radius: 999px;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 13.5px;
+    transition: background .18s, color .18s;
+  }
+  .nav__link:hover { background: var(--surface-2); color: var(--ink); }
+  .nav__link.is-active { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+  .nav__link.is-muted { cursor: default; color: var(--ink-2); }
+  .nav__link.is-muted b { color: var(--brand); }
+  .nav__link.is-muted:hover { background: transparent; color: var(--ink-2); }
+
+  .user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .user__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.35;
+  }
+  .user__name { font-weight: 600; }
+  .user__sub { font-size: 12px; color: var(--ink-3); }
+
+  .credit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fff7e8, #fdf0ff);
+    border: 1px solid #f4dfc0;
+    white-space: nowrap;
+  }
+  .credit svg { width: 15px; height: 15px; color: var(--warn); }
+  .credit__label { font-size: 12px; color: var(--ink-2); }
+  .credit__label-sm { display: none; font-size: 12px; color: var(--ink-2); }
+  .credit__value {
+    font-size: 15px;
+    color: #b45309;
+    font-variant-numeric: tabular-nums;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .credit.is-bump .credit__value { transform: scale(1.32); }
+
+  .avatar {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    user-select: none;
+  }
+  .avatar--sm { width: 26px; height: 26px; font-size: 12px; }
+  .avatar--me { background: linear-gradient(135deg, var(--brand), var(--brand-2)); }
+
+  /* ---------- 页面容器 ---------- */
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 24px 72px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ---------- 发布任务 ---------- */
+  .publish { padding: 22px 22px 18px; }
+  .publish__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .publish__head h1 { font-size: 17px; font-weight: 650; }
+  .publish__head p { font-size: 12.5px; color: var(--ink-3); }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 168px;
+    gap: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field-row + .field { margin-top: 14px; }
+  .field label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  .field input,
+  .field textarea {
+    width: 100%;
+    padding: 11px 13px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color .16s, box-shadow .16s, background .16s;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder { color: #b6bfd0; }
+  .field input:focus,
+  .field textarea:focus {
+    background: #fff;
+    border-color: var(--brand);
+    box-shadow: var(--ring);
+  }
+  .field textarea { resize: vertical; min-height: 62px; }
+  .field input.is-invalid,
+  .field textarea.is-invalid { border-color: var(--danger); background: #fff6f6; }
+
+  .reward-input {
+    display: flex;
+    align-items: center;
+    padding-left: 13px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    transition: border-color .16s, box-shadow .16s, background .16s;
+  }
+  .reward-input:focus-within {
+    background: #fff;
+    border-color: var(--brand);
+    box-shadow: var(--ring);
+  }
+  .reward-input span { color: var(--ink-3); font-weight: 600; }
+  .reward-input input {
+    border: 0;
+    background: transparent;
+    padding: 11px 12px 11px 2px;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+  }
+  .reward-input input:focus { box-shadow: none; background: transparent; }
+  .reward-input input::-webkit-outer-spin-button,
+  .reward-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .reward-input:has(input.is-invalid) { border-color: var(--danger); background: #fff6f6; }
+
+  .field__error {
+    font-size: 12px;
+    color: var(--danger);
+    display: none;
+  }
+  .field__error.is-shown { display: block; }
+
+  .field__foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 17px;
+  }
+  .counter {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .form-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line-strong);
+  }
+  .quick-rewards { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .quick-rewards span { font-size: 12px; color: var(--ink-3); }
+  .chip {
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: #fff;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    transition: all .16s;
+  }
+  .chip:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 13.5px;
+    transition: transform .15s, box-shadow .2s, background .2s, color .2s, border-color .2s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+  .btn--primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    box-shadow: 0 10px 22px -12px rgba(79, 110, 247, .95);
+  }
+  .btn--primary:hover { box-shadow: 0 14px 26px -12px rgba(79, 110, 247, .95); }
+  .btn--take { color: var(--brand); background: var(--brand-soft); border-color: #dbe3ff; }
+  .btn--take:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn--done {
+    color: #fff;
+    background: linear-gradient(135deg, #12b981, #0ea371);
+    box-shadow: 0 10px 22px -12px rgba(16, 185, 129, .95);
+  }
+  .btn--ghost { color: var(--ink-3); background: var(--surface-2); border-color: var(--line); cursor: not-allowed; }
+  .btn--sm { padding: 8px 16px; font-size: 13px; margin-left: auto; }
+
+  /* ---------- 任务大厅 ---------- */
+  .hall { margin-top: 26px; }
+  .hall__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .hall__title { display: flex; align-items: baseline; gap: 9px; }
+  .hall__title h2 { font-size: 17px; font-weight: 650; }
+  .count-pill {
+    font-size: 12px;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-variant-numeric: tabular-nums;
+  }
+  .filters {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    box-shadow: var(--shadow-xs);
+  }
+  .filter {
+    border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background .18s, color .18s;
+  }
+  .filter:hover { color: var(--ink); }
+  .filter.is-active { background: var(--ink); color: #fff; font-weight: 600; }
+
+  .task-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(322px, 1fr));
+    gap: 16px;
+  }
+  .task {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 18px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+    transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
+    animation: card-in .32s ease both;
+  }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .task:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--line-strong);
+  }
+  .task.is-mine {
+    background: linear-gradient(180deg, #fbfcff, #fff 60%);
+    border-color: #dde4ff;
+  }
+  .task.is-done { opacity: .72; }
+  .task.is-done:hover { transform: none; box-shadow: var(--shadow-xs); }
+
+  .task__top { display: flex; align-items: center; gap: 8px; }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .tag::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .tag--open { color: var(--brand); background: var(--brand-soft); }
+  .tag--doing { color: #b45309; background: var(--warn-soft); }
+  .tag--done { color: #0f766e; background: var(--ok-soft); }
+  .tag--mine { color: #6d28d9; background: #f3eeff; }
+
+  .reward {
+    margin-left: auto;
+    font-size: 16px;
+    font-weight: 700;
+    color: #d97706;
+    font-variant-numeric: tabular-nums;
+  }
+  .reward small { font-size: 11.5px; font-weight: 500; color: var(--ink-3); margin-left: 3px; }
+
+  .task__title { font-size: 15.5px; font-weight: 650; line-height: 1.4; word-break: break-word; }
+  .task__desc {
+    font-size: 13px;
+    color: var(--ink-2);
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .task__foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .publisher { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .publisher__meta { min-width: 0; }
+  .publisher__name {
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .publisher__time { font-size: 11.5px; color: var(--ink-3); }
+
+  .empty {
+    grid-column: 1 / -1;
+    padding: 52px 20px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-lg);
+  }
+  .empty__icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 12px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+    color: var(--ink-3);
+  }
+  .empty__icon svg { width: 24px; height: 24px; }
+  .empty h3 { font-size: 14.5px; font-weight: 650; margin-bottom: 4px; }
+  .empty p { font-size: 12.5px; color: var(--ink-3); }
+
+  /* ---------- 轻提示 ---------- */
+  .toasts {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .93);
+    color: #fff;
+    font-size: 13.5px;
+    box-shadow: 0 16px 34px -14px rgba(15, 23, 42, .7);
+    animation: toast-in .26s ease both;
+  }
+  .toast.is-out { animation: toast-out .24s ease forwards; }
+  .toast svg { width: 16px; height: 16px; flex: 0 0 auto; }
+  .toast--ok svg { color: #4ade80; }
+  .toast--credit svg { color: #fbbf24; }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(14px) scale(.96); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes toast-out {
+    to { opacity: 0; transform: translateY(8px) scale(.98); }
+  }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 860px) {
+    .nav__links { display: none; }
+    .field-row { grid-template-columns: minmax(0, 1fr); }
+    .task-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 620px) {
+    .nav__inner { padding: 10px 16px; gap: 12px; }
+    .user__sub, .credit__label { display: none; }
+    .credit__label-sm { display: inline; }
+    main { padding: 20px 16px 56px; }
+    .publish { padding: 18px 16px 14px; }
+    .form-foot { flex-direction: column; align-items: stretch; }
+    .form-foot .btn { width: 100%; margin-left: 0 !important; }
+    .filters { margin-left: 0; width: 100%; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+
+<!-- ============ 顶部导航：当前用户信息 + 信用分 ============ -->
+<header class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#top">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z"/>
+        </svg>
+      </span>
+      <span class="brand__text">校园跑腿<em>·</em>互助</span>
+    </a>
+
+    <nav class="nav__links" aria-label="主导航">
+      <a class="nav__link is-active" href="#hall">任务大厅</a>
+      <a class="nav__link" href="#publish">发布任务</a>
+      <span class="nav__link is-muted">进行中 <b id="navDoing">0</b></span>
+    </nav>
+
+    <div class="user">
+      <div class="user__meta">
+        <span class="user__name">陈嘉禾</span>
+        <span class="user__sub">计算机学院 · 已完成 <b id="userDone">0</b> 单</span>
+      </div>
+      <div class="credit" id="creditChip" title="信用分来自历史履约记录，完成任务可以提升">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.6l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.1l6.1-.9L12 2.6z"/>
+        </svg>
+        <span class="credit__label">信用分</span>
+        <span class="credit__label-sm">信用</span>
+        <b class="credit__value" id="creditValue">95</b>
+      </div>
+      <div class="avatar avatar--me" aria-hidden="true">陈</div>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============ 发布新任务 ============ -->
+  <section class="panel publish" id="publish">
+    <div class="publish__head">
+      <h1>发布新任务</h1>
+      <p>写清地点和时间，接单会更快</p>
+    </div>
+
+    <form id="taskForm" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="title">任务标题</label>
+          <input id="title" name="title" maxlength="30" autocomplete="off"
+                 placeholder="例如：帮我去菜鸟驿站取一个快递">
+          <p class="field__error" data-error="title"></p>
+        </div>
+        <div class="field">
+          <label for="reward">报酬（元）</label>
+          <div class="reward-input">
+            <span aria-hidden="true">¥</span>
+            <input id="reward" name="reward" inputmode="decimal" autocomplete="off" placeholder="15">
+          </div>
+          <p class="field__error" data-error="reward"></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="desc">任务描述</label>
+        <textarea id="desc" name="desc" maxlength="120" rows="2"
+                  placeholder="补充细节：取件码、楼栋、截止时间、注意事项……"></textarea>
+        <div class="field__foot">
+          <p class="field__error" data-error="desc"></p>
+          <span class="counter" id="descCounter">0/120</span>
+        </div>
+      </div>
+
+      <div class="form-foot">
+        <div class="quick-rewards">
+          <span>常用报酬</span>
+          <button type="button" class="chip" data-reward="5">¥5</button>
+          <button type="button" class="chip" data-reward="10">¥10</button>
+          <button type="button" class="chip" data-reward="15">¥15</button>
+          <button type="button" class="chip" data-reward="20">¥20</button>
+        </div>
+        <button type="submit" class="btn btn--primary" style="margin-left:auto">发布任务</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ 任务列表 ============ -->
+  <section class="hall" id="hall">
+    <div class="hall__head">
+      <div class="hall__title">
+        <h2>任务大厅</h2>
+        <span class="count-pill" id="taskCount">0 个任务</span>
+      </div>
+      <div class="filters" id="filters" role="tablist" aria-label="筛选任务">
+        <button class="filter is-active" data-filter="all" role="tab" aria-selected="true">全部</button>
+        <button class="filter" data-filter="open" role="tab" aria-selected="false">待接单</button>
+        <button class="filter" data-filter="doing" role="tab" aria-selected="false">进行中</button>
+        <button class="filter" data-filter="done" role="tab" aria-selected="false">已完成</button>
+        <button class="filter" data-filter="mine" role="tab" aria-selected="false">我发布的</button>
+      </div>
+    </div>
+    <div class="task-list" id="taskList"></div>
+  </section>
+</main>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   校园跑腿互助平台
+   所有数据由前端数组模拟，没有任何后端请求
+   ========================================================= */
+
+/* ---------- 数据层 ---------- */
+const ME = { id: 'me', name: '陈嘉禾', college: '计算机学院' };
+
+const ICONS = {
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.1l6.1-.9L12 2.6z"/></svg>',
+  empty: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h17v10a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-10z"/><path d="M3.5 8.5 6 4.5h12l2.5 4"/><path d="M9.5 12.5h5"/></svg>'
+};
+
+const minutesAgo = (n) => Date.now() - n * 60 * 1000;
+
+const tasks = [
+  { id: 1, title: '帮取菜鸟驿站快递（3 号柜）', desc: '取件码 6-2-3081，一个小纸箱不重。我在 12 号宿舍楼，送到楼下就行，晚上 8 点前都可以。',
+    reward: 8, publisher: '林一诺', college: '外国语学院', status: 'open', takerId: null, owner: 'other', createdAt: minutesAgo(24) },
+  { id: 2, title: '食堂带一份黄焖鸡米饭', desc: '第二食堂一楼，微辣不要香菜，送到实验楼 B 座 402 实验室门口。',
+    reward: 6, publisher: '赵明宇', college: '材料学院', status: 'open', takerId: null, owner: 'other', createdAt: minutesAgo(52) },
+  { id: 3, title: '打印店取装订好的论文（2 份）', desc: '老板姓王，钱已经付过了，报手机号后四位 4421 就行，送到经管楼 305。',
+    reward: 12, publisher: '孙倩', college: '经济管理学院', status: 'open', takerId: null, owner: 'other', createdAt: minutesAgo(96) },
+  { id: 4, title: '帮我去东门取一件外卖', desc: '外卖柜在东门右手边，取完送到 7 号宿舍楼门厅。天冷怕凉，尽快就好，谢谢！',
+    reward: 5, publisher: '周子涵', college: '艺术学院', status: 'open', takerId: null, owner: 'other', createdAt: minutesAgo(140) },
+  { id: 5, title: '图书馆四楼占两个靠窗座位', desc: '早上 8 点前到就行，帮我把书包和两本书放好，我 9 点下课过去接。',
+    reward: 10, publisher: '李思远', college: '数学学院', status: 'doing', takerId: 'other-9', owner: 'other', createdAt: minutesAgo(210) },
+  { id: 6, title: '归还图书馆超期图书 3 本', desc: '书放在 5 号宿舍楼 213，取书后还到图书馆一楼自助还书机，还完拍照给我确认。',
+    reward: 15, publisher: '吴桐', college: '化学学院', status: 'doing', takerId: 'me', owner: 'other', createdAt: minutesAgo(320) },
+  { id: 7, title: '送一份实验报告到教务处', desc: '已经装进文件袋，送到行政楼 2 楼教务处 3 号窗口，交给值班老师即可。',
+    reward: 9, publisher: '郑凯', college: '物理学院', status: 'done', takerId: 'me', owner: 'other', createdAt: minutesAgo(1500) },
+  { id: 8, title: '帮忙买两杯美式咖啡', desc: '校门口那家「壹杯」，少冰，送到体育馆羽毛球场 4 号场地。',
+    reward: 7, publisher: '何雨晴', college: '体育学院', status: 'done', takerId: 'other-4', owner: 'other', createdAt: minutesAgo(2600) }
+];
+
+let nextId = 100;
+
+const state = {
+  credit: 95,        // 当前信用分
+  completedByMe: 7,  // 历史完成单数，仅用于展示
+  filter: 'all'
+};
+
+/* ---------- 工具函数 ---------- */
+function relativeTime(ts) {
+  const diff = Math.max(0, Date.now() - ts);
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '刚刚';
+  if (min < 60) return min + ' 分钟前';
+  const hour = Math.floor(min / 60);
+  if (hour < 24) return hour + ' 小时前';
+  return Math.floor(hour / 24) + ' 天前';
+}
+
+function avatarHue(name) {
+  let h = 7;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return h;
+}
+
+function makeAvatar(name, extraClass) {
+  const el = document.createElement('div');
+  el.className = 'avatar' + (extraClass ? ' ' + extraClass : '');
+  el.textContent = name.slice(0, 1);
+  if (name === ME.name) {
+    el.classList.add('avatar--me');
+  } else {
+    const hue = avatarHue(name);
+    el.style.background = 'linear-gradient(135deg, hsl(' + hue + ' 66% 58%), hsl(' +
+      ((hue + 42) % 360) + ' 68% 50%))';
+  }
+  return el;
+}
+
+function statusMeta(task) {
+  if (task.status === 'done') return { text: '已完成', cls: 'tag--done' };
+  if (task.status === 'doing') return { text: '进行中', cls: 'tag--doing' };
+  return { text: '待接单', cls: 'tag--open' };
+}
+
+const $ = (sel) => document.querySelector(sel);
+
+const els = {
+  list: $('#taskList'),
+  count: $('#taskCount'),
+  filters: $('#filters'),
+  credit: $('#creditValue'),
+  creditChip: $('#creditChip'),
+  userDone: $('#userDone'),
+  navDoing: $('#navDoing'),
+  toasts: $('#toasts')
+};
+
+/* ---------- 渲染 ---------- */
+function visibleTasks() {
+  switch (state.filter) {
+    case 'open': return tasks.filter(t => t.status === 'open');
+    case 'doing': return tasks.filter(t => t.status === 'doing');
+    case 'done': return tasks.filter(t => t.status === 'done');
+    case 'mine': return tasks.filter(t => t.owner === 'me');
+    default: return tasks;
+  }
+}
+
+function buildCard(task, index) {
+  const card = document.createElement('article');
+  card.className = 'task';
+  if (task.owner === 'me') card.classList.add('is-mine');
+  if (task.status === 'done') card.classList.add('is-done');
+  card.style.animationDelay = Math.min(index * 28, 240) + 'ms';
+
+  /* 顶部：状态标签 + 报酬 */
+  const top = document.createElement('div');
+  top.className = 'task__top';
+  const meta = statusMeta(task);
+  const tag = document.createElement('span');
+  tag.className = 'tag ' + meta.cls;
+  tag.textContent = meta.text;
+  top.appendChild(tag);
+  if (task.owner === 'me') {
+    const mine = document.createElement('span');
+    mine.className = 'tag tag--mine';
+    mine.textContent = '我发布的';
+    top.appendChild(mine);
+  }
+  const reward = document.createElement('div');
+  reward.className = 'reward';
+  reward.appendChild(document.createTextNode('¥' + task.reward));
+  const unit = document.createElement('small');
+  unit.textContent = '报酬';
+  reward.appendChild(unit);
+  top.appendChild(reward);
+
+  /* 标题与描述用 textContent 写入，避免用户输入被当成 HTML 解析 */
+  const title = document.createElement('h3');
+  title.className = 'task__title';
+  title.textContent = task.title;
+
+  const desc = document.createElement('p');
+  desc.className = 'task__desc';
+  desc.textContent = task.desc;
+
+  /* 底部：发布者信息 + 操作按钮 */
+  const foot = document.createElement('div');
+  foot.className = 'task__foot';
+
+  const isMine = task.owner === 'me';
+  const publisher = document.createElement('div');
+  publisher.className = 'publisher';
+  publisher.appendChild(makeAvatar(isMine ? ME.name : task.publisher, 'avatar--sm'));
+  const pMeta = document.createElement('div');
+  pMeta.className = 'publisher__meta';
+  const pName = document.createElement('div');
+  pName.className = 'publisher__name';
+  pName.textContent = (isMine ? ME.name : task.publisher) + ' · ' +
+    (isMine ? ME.college : (task.college || '在校学生'));
+  const pTime = document.createElement('div');
+  pTime.className = 'publisher__time';
+  pTime.textContent = relativeTime(task.createdAt);
+  pMeta.appendChild(pName);
+  pMeta.appendChild(pTime);
+  publisher.appendChild(pMeta);
+  foot.appendChild(publisher);
+
+  foot.appendChild(buildAction(task));
+  card.append(top, title, desc, foot);
+  return card;
+}
+
+function buildAction(task) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn--sm';
+
+  if (task.status === 'open' && task.owner !== 'me') {
+    btn.classList.add('btn--take');
+    btn.textContent = '接单';
+    btn.addEventListener('click', () => acceptTask(task.id));
+  } else if (task.status === 'open') {
+    btn.classList.add('btn--ghost');
+    btn.textContent = '自己的任务';
+    btn.disabled = true;
+  } else if (task.status === 'doing' && task.takerId === 'me') {
+    btn.classList.add('btn--done');
+    btn.textContent = '完成任务';
+    btn.addEventListener('click', () => finishTask(task.id));
+  } else if (task.status === 'doing') {
+    btn.classList.add('btn--ghost');
+    btn.textContent = '他人接单中';
+    btn.disabled = true;
+  } else {
+    btn.classList.add('btn--ghost');
+    btn.textContent = '已完成';
+    btn.disabled = true;
+  }
+  return btn;
+}
+
+function renderTasks() {
+  const list = visibleTasks();
+  els.list.textContent = '';
+  els.count.textContent = list.length + ' 个任务';
+
+  if (!list.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    const icon = document.createElement('div');
+    icon.className = 'empty__icon';
+    icon.innerHTML = ICONS.empty;
+    const h3 = document.createElement('h3');
+    h3.textContent = state.filter === 'mine' ? '还没有发布过任务' : '这里暂时没有任务';
+    const p = document.createElement('p');
+    p.textContent = state.filter === 'mine'
+      ? '在上面填好标题、描述和报酬，第一个任务就发出去了'
+      : '换个筛选条件看看，或者去发布一个新任务';
+    empty.append(icon, h3, p);
+    els.list.appendChild(empty);
+    return;
+  }
+  list.forEach((task, i) => els.list.appendChild(buildCard(task, i)));
+}
+
+function renderStats() {
+  els.credit.textContent = state.credit;
+  els.userDone.textContent = state.completedByMe;
+  els.navDoing.textContent = tasks.filter(t => t.status === 'doing' && t.takerId === 'me').length;
+}
+
+function render() {
+  renderTasks();
+  renderStats();
+}
+
+/* ---------- 轻提示 ---------- */
+function toast(message, kind) {
+  const el = document.createElement('div');
+  el.className = 'toast toast--' + (kind === 'credit' ? 'credit' : 'ok');
+  el.innerHTML = kind === 'credit' ? ICONS.star : ICONS.ok;
+  const span = document.createElement('span');
+  span.textContent = message;
+  el.appendChild(span);
+  els.toasts.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('is-out');
+    setTimeout(() => el.remove(), 240);
+  }, 2400);
+}
+
+function bumpCredit() {
+  els.creditChip.classList.add('is-bump');
+  setTimeout(() => els.creditChip.classList.remove('is-bump'), 320);
+}
+
+/* ---------- 接单与完成 ---------- */
+function acceptTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task || task.status !== 'open' || task.owner === 'me') return;
+  task.status = 'doing';
+  task.takerId = 'me';
+  render();
+  toast('已接单，记得按描述联系对方');
+}
+
+function finishTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task || task.status !== 'doing' || task.takerId !== 'me') return;
+  task.status = 'done';
+  state.completedByMe += 1;
+  state.credit = Math.min(100, state.credit + 2);
+  render();
+  bumpCredit();
+  toast('任务完成，信用分 +2', 'credit');
+}
+
+/* ---------- 表单校验与发布 ---------- */
+const form = $('#taskForm');
+const titleInput = $('#title');
+const rewardInput = $('#reward');
+const descInput = $('#desc');
+
+function setError(name, message) {
+  const box = document.querySelector('[data-error="' + name + '"]');
+  box.textContent = message || '';
+  box.classList.toggle('is-shown', Boolean(message));
+  const control = document.getElementById(name);
+  if (control) control.classList.toggle('is-invalid', Boolean(message));
+}
+
+function clearErrors() {
+  ['title', 'reward', 'desc'].forEach(name => setError(name, ''));
+}
+
+function validate() {
+  clearErrors();
+  let firstBad = null;
+  const title = titleInput.value.trim();
+  const desc = descInput.value.trim();
+  const rewardRaw = rewardInput.value.trim();
+  const reward = Number(rewardRaw);
+
+  if (title.length < 2) { setError('title', '标题至少 2 个字'); firstBad = firstBad || titleInput; }
+  else if (title.length > 30) { setError('title', '标题最多 30 个字'); firstBad = firstBad || titleInput; }
+
+  if (desc.length < 5) { setError('desc', '描述至少 5 个字，写清地点和时间'); firstBad = firstBad || descInput; }
+
+  if (!rewardRaw) { setError('reward', '请填写报酬'); firstBad = firstBad || rewardInput; }
+  else if (!Number.isFinite(reward) || reward <= 0) { setError('reward', '报酬要大于 0'); firstBad = firstBad || rewardInput; }
+  else if (reward > 200) { setError('reward', '单笔报酬不超过 200 元'); firstBad = firstBad || rewardInput; }
+
+  if (firstBad) { firstBad.focus(); return null; }
+  return { title: title, desc: desc, reward: Math.round(reward * 10) / 10 };
+}
+
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const data = validate();
+  if (!data) return;
+
+  tasks.unshift({
+    id: nextId++,
+    title: data.title,
+    desc: data.desc,
+    reward: data.reward,
+    publisher: ME.name,
+    college: ME.college,
+    status: 'open',
+    takerId: null,
+    owner: 'me',
+    createdAt: Date.now()
+  });
+
+  form.reset();
+  clearErrors();
+  updateCounter();
+  if (state.filter !== 'all') setFilter('all');
+  render();
+  toast('任务已发布，等待同学接单');
+});
+
+/* 输入时清掉该字段已有的报错 */
+[titleInput, rewardInput, descInput].forEach(input => {
+  input.addEventListener('input', () => {
+    if (input.classList.contains('is-invalid')) setError(input.id, '');
+  });
+});
+
+function updateCounter() {
+  $('#descCounter').textContent = descInput.value.length + '/120';
+}
+descInput.addEventListener('input', updateCounter);
+
+/* 常用报酬快捷填入 */
+document.querySelectorAll('.chip[data-reward]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    rewardInput.value = chip.dataset.reward;
+    setError('reward', '');
+    rewardInput.focus();
+  });
+});
+
+/* 筛选切换 */
+function setFilter(key) {
+  state.filter = key;
+  els.filters.querySelectorAll('.filter').forEach(btn => {
+    const active = btn.dataset.filter === key;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  renderTasks();
+}
+els.filters.addEventListener('click', (event) => {
+  const btn = event.target.closest('.filter');
+  if (btn) setFilter(btn.dataset.filter);
+});
+
+/* 首次渲染 */
+render();
+updateCounter();
+
+/* 调试入口：方便在控制台里直接驱动页面逻辑 */
+window.CampusRun = {
+  state: state,
+  tasks: tasks,
+  render: render,
+  acceptTask: acceptTask,
+  finishTask: finishTask,
+  setFilter: setFilter,
+  relativeTime: relativeTime
+};
+</script>
+</body>
+</html>
